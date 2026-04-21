@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目实践 | 黄梓泓</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav id="navbar" class="scrolled">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">梓泓</a>
+      <ul class="nav-links">
+        <li><a href="index.html">首页</a></li>
+        <li><a href="python.html">Python基础课程</a></li>
+        <li><a href="notes.html">学习笔记</a></li>
+        <li><a href="projects.html" class="active">项目实践</a></li>
+        <li><a href="index.html#contact">联系我</a></li>
+      </ul>
+      <button class="nav-toggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 页面头部 -->
+  <header class="page-header">
+    <div class="page-header-bg"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">💡 项目实践</h1>
+      <p class="hero-subtitle">学以致用，在实践中成长</p>
+    </div>
+  </header>
+
+  <!-- 项目内容 -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">我的项目</h2>
+      <div class="projects-grid">
+        <div class="project-card">
+          <div class="project-img">
+            <img src="assets/hero-bg.jpg" alt="销售数据分析">
+            <div class="project-status">进行中</div>
+          </div>
+          <div class="project-info">
+            <h3>📊 电商销售数据分析</h3>
+            <p>使用 Python 对电商平台的销售数据进行清洗、分析和可视化，挖掘销售趋势和用户行为模式。</p>
+            <div class="project-tags">
+              <span>Python</span>
+              <span>Pandas</span>
+              <span>Matplotlib</span>
+              <span>数据分析</span>
+            </div>
+          </div>
+        </div>
+        <div class="project-card">
+          <div class="project-img">
+            <img src="assets/calligraphy.jpg" alt="学生成绩分析">
+            <div class="project-status completed">已完成</div>
+          </div>
+          <div class="project-info">
+            <h3>📈 学生成绩可视化系统</h3>
+            <p>基于 Excel 学生成绩数据，使用数据透视表和图表进行成绩分析，生成可视化报告。</p>
+            <div class="project-tags">
+              <span>Excel</span>
+              <span>数据透视表</span>
+              <span>可视化</span>
+            </div>
+          </div>
+        </div>
+        <div class="project-card">
+          <div class="project-img">
+            <img src="assets/travel-food.jpg" alt="市场调研">
+            <div class="project-status completed">已完成</div>
+          </div>
+          <div class="project-info">
+            <h3>🔍 消费者市场调研分析</h3>
+            <p>设计问卷调查，收集消费者数据，使用 SQL 进行数据管理，撰写市场调研分析报告。</p>
+            <div class="project-tags">
+              <span>SQL</span>
+              <span>问卷设计</span>
+              <span>市场分析</span>
+            </div>
+          </div>
+        </div>
+        <div class="project-card">
+          <div class="project-img">
+            <img src="assets/avatar.jpg" alt="个人网站">
+            <div class="project-status completed">已完成</div>
+          </div>
+          <div class="project-info">
+            <h3>🌐 个人主页搭建</h3>
+            <p>使用 HTML、CSS、JavaScript 从零搭建个人网站，部署到 GitHub Pages 和 Cloudflare Pages。</p>
+            <div class="project-tags">
+              <span>HTML</span>
+              <span>CSS</span>
+              <span>JavaScript</span>
+              <span>Git</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 黄梓泓 · 用心记录生活的每一刻</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

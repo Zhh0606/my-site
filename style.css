@@ -659,6 +659,253 @@ footer {
   font-size: 0.9rem;
 }
 
+/* ===== 子页面头部 ===== */
+.page-header {
+  position: relative;
+  height: 45vh;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: url('assets/hero-bg.jpg') center/cover no-repeat;
+  overflow: hidden;
+}
+
+.page-header-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(61, 64, 91, 0.88) 0%,
+    rgba(129, 178, 154, 0.65) 50%,
+    rgba(224, 122, 95, 0.75) 100%
+  );
+}
+
+.page-header .hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: var(--white);
+  padding: 0 24px;
+}
+
+/* ===== 课程卡片 ===== */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.course-card {
+  background: var(--white);
+  padding: 32px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.course-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-hover);
+}
+
+.course-number {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: rgba(224, 122, 95, 0.12);
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  line-height: 1;
+}
+
+.course-card h3 {
+  font-size: 1.2rem;
+  color: var(--secondary);
+  margin-bottom: 10px;
+}
+
+.course-card > p {
+  color: var(--text-light);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.course-points {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.course-points li {
+  padding: 4px 14px;
+  background: var(--bg-alt);
+  border-radius: 50px;
+  font-size: 0.82rem;
+  color: var(--secondary);
+}
+
+/* ===== 笔记卡片 ===== */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.note-card {
+  background: var(--white);
+  padding: 28px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+}
+
+.note-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-hover);
+}
+
+.note-category {
+  display: inline-block;
+  padding: 4px 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: var(--white);
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  align-self: flex-start;
+}
+
+.note-card h3 {
+  font-size: 1.15rem;
+  color: var(--secondary);
+  margin-bottom: 10px;
+}
+
+.note-card > p {
+  color: var(--text-light);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.note-meta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.note-link {
+  display: inline-block;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.note-link:hover {
+  color: var(--secondary);
+  transform: translateX(4px);
+  display: inline-block;
+}
+
+/* ===== 项目卡片 ===== */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+}
+
+.project-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.project-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hover);
+}
+
+.project-img {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.project-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.project-card:hover .project-img img {
+  transform: scale(1.08);
+}
+
+.project-status {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 4px 14px;
+  background: var(--primary);
+  color: var(--white);
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.project-status.completed {
+  background: var(--accent);
+}
+
+.project-info {
+  padding: 24px;
+}
+
+.project-info h3 {
+  font-size: 1.15rem;
+  color: var(--secondary);
+  margin-bottom: 10px;
+}
+
+.project-info > p {
+  color: var(--text-light);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.project-tags span {
+  padding: 4px 12px;
+  background: var(--bg-alt);
+  border-radius: 50px;
+  font-size: 0.8rem;
+  color: var(--secondary);
+}
+
 /* ===== 动画 ===== */
 .fade-in {
   opacity: 0;
@@ -713,6 +960,18 @@ footer {
   }
 
   .hobbies-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .course-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .projects-grid {
     grid-template-columns: 1fr;
   }
 
