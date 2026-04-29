@@ -1500,7 +1500,7 @@ function damageDuck(amount, source) {
   
   if (duck.health <= 0) {
     duck.health = 0;
-    gameOver();
+    showFallScreen();
   }
 }
 
@@ -1882,6 +1882,7 @@ function gameOver() {
 // ==================== 坠落选择系统 ====================
 
 function showFallScreen() {
+  if (game.paused) return; // 防止重复触发
   game.paused = true;
   game.running = false;
   
@@ -1894,11 +1895,14 @@ function showFallScreen() {
     当前攀登距离: <span id="fallDistance">${currentDist}</span>m<br>
     重新挑战将从本关起点开始
   `;
+  // 确保其他面板都隐藏
+  document.getElementById('gameOverScreen').style.display = 'none';
   document.getElementById('fallScreen').style.display = 'flex';
 }
 
 function retryFromFall() {
   document.getElementById('fallScreen').style.display = 'none';
+  document.getElementById('gameOverScreen').style.display = 'none';
   
   // 从当前关卡起点重玩
   restartCurrentLevel();
