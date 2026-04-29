@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>倔强小鸭闯天涯</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1a2e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  overflow: hidden;
+}
+#gameContainer {
+  position: relative;
+  width: 900px;
+  height: 600px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#startScreen, #gameOverScreen {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.85);
+  z-index: 10;
+  color: white;
+}
+#startScreen h1 {
+  font-size: 48px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px rgba(255,200,0,0.8);
+}
+#startScreen .subtitle {
+  font-size: 18px;
+  color: #aaa;
+  margin-bottom: 30px;
+}
+#startScreen .controls {
+  font-size: 14px;
+  color: #888;
+  margin-top: 20px;
+  text-align: center;
+  line-height: 2;
+}
+.btn {
+  padding: 15px 50px;
+  font-size: 22px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: white;
+  font-weight: bold;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 5px;
+}
+.btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 20px rgba(245,87,108,0.5);
+}
+#gameOverScreen h1 { font-size: 42px; color: #ff6b6b; margin-bottom: 10px; }
+#gameOverScreen .score { font-size: 24px; color: #ffd93d; margin-bottom: 20px; }
+#gameOverScreen .stats { font-size: 16px; color: #aaa; margin-bottom: 20px; line-height: 1.8; }
+#fallScreen {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.8);
+  z-index: 10;
+  color: white;
+}
+#fallScreen h1 { font-size: 38px; color: #FF9800; margin-bottom: 8px; text-shadow: 0 0 15px rgba(255,152,0,0.6); }
+#fallScreen .fall-info { font-size: 16px; color: #ccc; margin-bottom: 25px; text-align: center; line-height: 1.8; }
+#fallScreen .fall-buttons { display: flex; gap: 20px; }
+.btn-retry {
+  padding: 14px 40px;
+  font-size: 20px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  color: white;
+  font-weight: bold;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-retry:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 20px rgba(67,233,123,0.5);
+}
+.btn-quit {
+  padding: 14px 40px;
+  font-size: 20px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+  color: white;
+  font-weight: bold;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-quit:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 20px rgba(161,140,209,0.5);
+}
+#mobileControls {
+  position: absolute;
+  bottom: 10px;
+  left: 0; right: 0;
+  display: none;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 5;
+  pointer-events: none;
+}
+.mobile-btn {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.mobile-btn:active { background: rgba(255,255,255,0.3); }
+.mobile-left-group { display: flex; gap: 10px; }
+@media (max-width: 920px) {
+  #gameContainer { width: 100vw; height: 100vh; border-radius: 0; }
+  #mobileControls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+  <canvas id="gameCanvas" width="900" height="600"></canvas>
+  
+  <div id="startScreen">
+    <h1>🦆 倔强小鸭闯天涯</h1>
+    <p class="subtitle">一只倔强的小鸭子，踏上了闯荡天涯的旅程...</p>
+    <button class="btn" onclick="startGame()">开始冒险</button>
+    <div class="controls">
+      ⬅️➡️ 方向键移动 &nbsp;|&nbsp; ⬆️/空格 跳跃<br>
+      在攀登途中，你将面对人类的威胁、狼狗的追捕、食物危机和极端天气<br>
+      但别担心，总会有好心人送来援助！
+    </div>
+  </div>
+
+  <div id="gameOverScreen" style="display:none;">
+    <h1>💀 冒险结束</h1>
+    <div class="score" id="finalScore">攀登距离: 0m</div>
+    <div class="stats" id="finalStats"></div>
+    <button class="btn" onclick="startGame()">再次挑战</button>
+  </div>
+
+  <div id="fallScreen">
+    <h1>💥 鸭子掉下去了！</h1>
+    <div class="fall-info" id="fallInfo">
+      当前攀登距离: <span id="fallDistance">0</span>m<br>
+      剩余生命值: <span id="fallHealth">0</span>
+    </div>
+    <div class="fall-buttons">
+      <button class="btn-retry" onclick="retryFromFall()">🔄 重新挑战</button>
+      <button class="btn-quit" onclick="endGameFromFall()">🏁 结束挑战</button>
+    </div>
+  </div>
+
+  <div id="mobileControls">
+    <div class="mobile-left-group">
+      <div class="mobile-btn" id="btnLeft">⬅</div>
+      <div class="mobile-btn" id="btnRight">➡</div>
+    </div>
+    <div class="mobile-btn" id="btnJump">⬆</div>
+  </div>
+</div>
+
+<script>
+// ==================== 游戏核心 ====================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = 900, H = 600;
+
+// ==================== 关卡配置 ====================
+const LEVELS = [
+  { name: '翠绿草原', desc: '宁静的起点', mainThreat: 'wolves', difficulty: 1, gap: 70, platW: [100,160], eventGap: 700, powerupGap: 350, color: '#4CAF50' },
+  { name: '猎人之林', desc: '猎人开始出没', mainThreat: 'hunter', difficulty: 1.3, gap: 75, platW: [90,150], eventGap: 650, powerupGap: 340, color: '#388E3C' },
+  { name: '狼群峡谷', desc: '狼群在暗处窥视', mainThreat: 'wolves', difficulty: 1.6, gap: 80, platW: [85,140], eventGap: 600, powerupGap: 330, color: '#795548' },
+  { name: '暴风山脊', desc: '暴风雨即将来临', mainThreat: 'storm', difficulty: 2.0, gap: 85, platW: [80,130], eventGap: 550, powerupGap: 320, color: '#546E7A' },
+  { name: '饥荒荒原', desc: '食物极度匮乏', mainThreat: 'food_crisis', difficulty: 2.4, gap: 90, platW: [75,125], eventGap: 500, powerupGap: 300, color: '#8D6E63' },
+  { name: '暴雪冰峰', desc: '严寒考验意志', mainThreat: 'snow', difficulty: 2.9, gap: 95, platW: [70,120], eventGap: 480, powerupGap: 290, color: '#90A4AE' },
+  { name: '猎人要塞', desc: '猎人密集防守', mainThreat: 'hunter', difficulty: 3.4, gap: 100, platW: [65,115], eventGap: 450, powerupGap: 280, color: '#D32F2F' },
+  { name: '狼王领地', desc: '狼王亲自追捕', mainThreat: 'wolves', difficulty: 4.0, gap: 105, platW: [60,110], eventGap: 420, powerupGap: 270, color: '#4E342E' },
+  { name: '熔岩地狱', desc: '极端高温炙烤', mainThreat: 'heatwave', difficulty: 4.6, gap: 110, platW: [55,105], eventGap: 400, powerupGap: 260, color: '#FF5722' },
+  { name: '终极巅峰', desc: '所有困难集中爆发', mainThreat: 'all', difficulty: 5.5, gap: 115, platW: [50,100], eventGap: 350, powerupGap: 250, color: '#FFD700' }
+];
+const LEVEL_DISTANCE = 500; // 每关500米
+const TOTAL_LEVELS = LEVELS.length;
+
+// 游戏状态
+let game = {
+  running: false,
+  paused: false,
+  camera: { x: 0, y: 0 },
+  distance: 0,
+  speed: 2,
+  baseSpeed: 2,
+  time: 0,
+  difficulty: 1,
+  eventsTriggered: 0,
+  maxDistance: 0,
+  score: 0,
+  goalDistance: TOTAL_LEVELS * LEVEL_DISTANCE,
+  reachedGoal: false,
+  currentLevel: 0, // 当前关卡索引 0-9
+  levelStartX: 0,  // 当前关卡起点的世界X坐标（像素）
+  levelTransitioning: false,
+  levelCleared: new Array(TOTAL_LEVELS).fill(false)
+};
+
+// ==================== 鸭子角色 ====================
+let duck = {
+  x: 150, y: 400, w: 40, h: 35,
+  vx: 0, vy: 0,
+  onGround: false,
+  health: 100, maxHealth: 100,
+  hunger: 100, maxHunger: 100,
+  immunity: 0,
+  facing: 1,
+  animFrame: 0, animTimer: 0,
+  walking: false,
+  invincible: 0,
+  // 装备
+  hasArmor: false, armorDurability: 0,
+  hasHelmet: false, helmetDurability: 0,
+  hasWaterproof: false, waterproofDurability: 0,
+  // 状态效果
+  speedBoost: 0,
+  shieldActive: false,
+  shieldTimer: 0,
+  // 动画
+  blinkTimer: 0,
+  hurtTimer: 0,
+  quackTimer: 0
+};
+
+// ==================== 世界系统 ====================
+let platforms = [];
+let obstacles = [];
+let powerups = [];
+let particles = [];
+let weatherParticles = [];
+let notifications = [];
+let enemies = [];
+let projectiles = [];
+
+// 地形生成
+let terrainGen = {
+  lastPlatformX: 0,
+  lastPlatformY: 400,
+  nextEventDistance: 800,
+  nextPowerupDistance: 400,
+  generatedUpTo: 0
+};
+
+// 当前活跃事件
+let activeEvent = null;
+let eventTimer = 0;
+let eventWarningTimer = 0;
+
+// 背景层
+let bgLayers = {
+  mountains: [],
+  trees: [],
+  clouds: []
+};
+
+// ==================== 输入系统 ====================
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// 移动端控制
+function setupMobile() {
+  const btnL = document.getElementById('btnLeft');
+  const btnR = document.getElementById('btnRight');
+  const btnJ = document.getElementById('btnJump');
+  
+  const addTouch = (el, key) => {
+    el.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; });
+    el.addEventListener('touchend', e => { e.preventDefault(); keys[key] = false; });
+  };
+  addTouch(btnL, 'ArrowLeft');
+  addTouch(btnR, 'ArrowRight');
+  addTouch(btnJ, 'Space');
+}
+setupMobile();
+
+// ==================== 绘制函数 ====================
+
+// 绘制鸭子（高像素卡通风格）
+function drawDuck(x, y, facing, frame, state) {
+  ctx.save();
+  ctx.translate(x + 20, y + 17);
+  ctx.scale(facing, 1);
+  
+  const bobY = state === 'walk' ? Math.sin(frame * 0.3) * 3 : 0;
+  const hurt = duck.hurtTimer > 0;
+  
+  // 防水套装效果
+  if (duck.hasWaterproof) {
+    ctx.fillStyle = 'rgba(0, 150, 255, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(0, bobY + 2, 25, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // 身体
+  const bodyColor = hurt ? '#ff8888' : '#FFD93D';
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  ctx.ellipse(0, bobY + 5, 18, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#E8B830';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  // 翅膀
+  const wingAngle = state === 'walk' ? Math.sin(frame * 0.3) * 0.3 : -0.2;
+  ctx.save();
+  ctx.translate(-5, bobY + 2);
+  ctx.rotate(wingAngle);
+  ctx.fillStyle = hurt ? '#ffaa88' : '#FFC107';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 10, 6, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#E8A800';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+  
+  // 脚
+  const legAnim = state === 'walk' ? Math.sin(frame * 0.3) * 5 : 0;
+  ctx.fillStyle = '#FF8C00';
+  // 左脚
+  ctx.beginPath();
+  ctx.ellipse(-6 + legAnim, bobY + 18, 6, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // 右脚
+  ctx.beginPath();
+  ctx.ellipse(6 - legAnim, bobY + 18, 6, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 头
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  ctx.arc(12, bobY - 8, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#E8B830';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  // 盔甲
+  if (duck.hasArmor) {
+    ctx.fillStyle = 'rgba(150, 150, 170, 0.7)';
+    ctx.beginPath();
+    ctx.ellipse(0, bobY + 3, 20, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // 盔甲高光
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(-5, bobY - 3, 8, 4, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // 头盔
+  if (duck.hasHelmet) {
+    ctx.fillStyle = '#666';
+    ctx.beginPath();
+    ctx.arc(12, bobY - 10, 14, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // 头盔面罩
+    ctx.fillStyle = 'rgba(100,200,255,0.3)';
+    ctx.beginPath();
+    ctx.arc(16, bobY - 7, 8, -0.5, 0.5);
+    ctx.fill();
+  }
+  
+  // 眼睛
+  const blink = duck.blinkTimer > 0 && duck.blinkTimer < 5;
+  ctx.fillStyle = 'white';
+  ctx.beginPath();
+  ctx.ellipse(17, bobY - 10, 5, blink ? 1 : 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  if (!blink) {
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(18, bobY - 10, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // 眼睛高光
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(19, bobY - 11, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // 嘴巴
+  ctx.fillStyle = '#FF6B35';
+  ctx.beginPath();
+  ctx.moveTo(22, bobY - 6);
+  ctx.lineTo(32, bobY - 4);
+  ctx.lineTo(22, bobY - 1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#E55A25';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  
+  // 免疫光环
+  if (duck.immunity > 0) {
+    ctx.strokeStyle = `rgba(0, 255, 100, ${0.3 + Math.sin(game.time * 0.1) * 0.2})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, bobY + 5, 28, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  // 护盾效果
+  if (duck.shieldActive) {
+    ctx.strokeStyle = `rgba(100, 200, 255, ${0.4 + Math.sin(game.time * 0.15) * 0.2})`;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.arc(0, bobY + 5, 30, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  
+  ctx.restore();
+}
+
+// 绘制平台
+function drawPlatform(p) {
+  const sx = p.x - game.camera.x;
+  const sy = p.y - game.camera.y;
+  
+  // 根据区域类型改变颜色
+  let colors;
+  if (game.distance < 2000) {
+    colors = { top: '#4CAF50', body: '#795548', grass: '#66BB6A' };
+  } else if (game.distance < 5000) {
+    colors = { top: '#8BC34A', body: '#6D4C41', grass: '#9CCC65' };
+  } else if (game.distance < 8000) {
+    colors = { top: '#78909C', body: '#546E7A', grass: '#90A4AE' };
+  } else {
+    colors = { top: '#B0BEC5', body: '#78909C', grass: '#CFD8DC' };
+  }
+  
+  // 泥土
+  ctx.fillStyle = colors.body;
+  ctx.fillRect(sx, sy + 5, p.w, p.h - 5);
+  
+  // 草地顶部
+  ctx.fillStyle = colors.top;
+  ctx.fillRect(sx, sy, p.w, 8);
+  
+  // 草丛装饰
+  ctx.fillStyle = colors.grass;
+  for (let gx = sx + 5; gx < sx + p.w - 5; gx += 12) {
+    const gh = 4 + Math.sin(gx * 0.5 + game.time * 0.02) * 2;
+    ctx.beginPath();
+    ctx.moveTo(gx, sy);
+    ctx.lineTo(gx + 3, sy - gh);
+    ctx.lineTo(gx + 6, sy);
+    ctx.fill();
+  }
+}
+
+// 绘制背景
+function drawBackground() {
+  // 天空渐变 - 根据距离变化
+  const skyProgress = Math.min(game.distance / 10000, 1);
+  const skyTop = lerpColor('#87CEEB', '#1a1a3e', skyProgress);
+  const skyBottom = lerpColor('#E0F7FA', '#2d2d5e', skyProgress);
+  
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, skyTop);
+  grad.addColorStop(1, skyBottom);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  
+  // 太阳/月亮
+  const sunY = 80 - skyProgress * 40;
+  const sunColor = skyProgress > 0.5 ? '#E0E0E0' : '#FFD93D';
+  ctx.fillStyle = sunColor;
+  ctx.beginPath();
+  ctx.arc(750, sunY, 30, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = skyProgress > 0.5 ? 'rgba(200,200,220,0.2)' : 'rgba(255,217,61,0.2)';
+  ctx.beginPath();
+  ctx.arc(750, sunY, 45, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 远山 (视差 0.1)
+  const mOffset = game.camera.x * 0.1;
+  ctx.fillStyle = skyProgress > 0.5 ? '#2a2a4e' : '#81C784';
+  for (let i = 0; i < 5; i++) {
+    const mx = (i * 300 - mOffset % 300 + 300) % (W + 300) - 150;
+    const mh = 120 + Math.sin(i * 2.5) * 40;
+    ctx.beginPath();
+    ctx.moveTo(mx - 180, H);
+    ctx.lineTo(mx, H - mh);
+    ctx.lineTo(mx + 180, H);
+    ctx.fill();
+  }
+  
+  // 中山 (视差 0.2)
+  const m2Offset = game.camera.x * 0.2;
+  ctx.fillStyle = skyProgress > 0.5 ? '#353560' : '#66BB6A';
+  for (let i = 0; i < 7; i++) {
+    const mx = (i * 200 - m2Offset % 200 + 200) % (W + 200) - 100;
+    const mh = 80 + Math.sin(i * 1.8) * 30;
+    ctx.beginPath();
+    ctx.moveTo(mx - 120, H);
+    ctx.lineTo(mx, H - mh);
+    ctx.lineTo(mx + 120, H);
+    ctx.fill();
+  }
+  
+  // 云朵 (视差 0.05)
+  const cOffset = game.camera.x * 0.05;
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  for (let i = 0; i < 6; i++) {
+    const cx = (i * 250 - cOffset % 250 + 250) % (W + 250) - 125;
+    const cy = 60 + Math.sin(i * 3) * 30;
+    drawCloud(cx, cy, 0.8 + Math.sin(i) * 0.3);
+  }
+  
+  // 树木 (视差 0.3)
+  const tOffset = game.camera.x * 0.3;
+  for (let i = 0; i < 10; i++) {
+    const tx = (i * 150 - tOffset % 150 + 150) % (W + 150) - 75;
+    const ty = H - 100 + Math.sin(i * 2) * 20;
+    drawTree(tx, ty, skyProgress);
+  }
+}
+
+function drawCloud(x, y, scale) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.beginPath();
+  ctx.arc(0, 0, 20, 0, Math.PI * 2);
+  ctx.arc(20, -5, 15, 0, Math.PI * 2);
+  ctx.arc(-20, -3, 18, 0, Math.PI * 2);
+  ctx.arc(10, 5, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawTree(x, y, progress) {
+  // 树干
+  ctx.fillStyle = '#5D4037';
+  ctx.fillRect(x - 4, y, 8, 30);
+  // 树冠
+  const green = progress > 0.5 ? '#2E7D32' : '#43A047';
+  ctx.fillStyle = green;
+  ctx.beginPath();
+  ctx.arc(x, y - 5, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = progress > 0.5 ? '#1B5E20' : '#2E7D32';
+  ctx.beginPath();
+  ctx.arc(x - 8, y, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x + 8, y, 12, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ==================== 障碍物绘制 ====================
+
+function drawHunter(o) {
+  const sx = o.x - game.camera.x;
+  const sy = o.y - game.camera.y;
+  
+  // 身体
+  ctx.fillStyle = '#8B4513';
+  ctx.fillRect(sx - 10, sy - 25, 20, 30);
+  
+  // 头
+  ctx.fillStyle = '#FFCCBC';
+  ctx.beginPath();
+  ctx.arc(sx, sy - 32, 10, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 猎人帽
+  ctx.fillStyle = '#4E342E';
+  ctx.fillRect(sx - 14, sy - 42, 28, 6);
+  ctx.fillRect(sx - 8, sy - 50, 16, 10);
+  
+  // 猎枪
+  ctx.fillStyle = '#333';
+  ctx.save();
+  ctx.translate(sx + 10, sy - 15);
+  ctx.rotate(-0.3);
+  ctx.fillRect(0, -2, 25, 4);
+  ctx.restore();
+  
+  // 眼睛
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.arc(sx + 3, sy - 33, 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawWolf(o) {
+  const sx = o.x - game.camera.x;
+  const sy = o.y - game.camera.y;
+  const runFrame = Math.sin(game.time * 0.2 + o.x) * 5;
+  
+  // 身体
+  ctx.fillStyle = '#5D4037';
+  ctx.beginPath();
+  ctx.ellipse(sx, sy - 10, 22, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 头
+  ctx.fillStyle = '#6D4C41';
+  ctx.beginPath();
+  ctx.ellipse(sx + 18, sy - 16, 10, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 耳朵
+  ctx.beginPath();
+  ctx.moveTo(sx + 14, sy - 22);
+  ctx.lineTo(sx + 12, sy - 32);
+  ctx.lineTo(sx + 18, sy - 24);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(sx + 20, sy - 22);
+  ctx.lineTo(sx + 22, sy - 32);
+  ctx.lineTo(sx + 26, sy - 24);
+  ctx.fill();
+  
+  // 嘴巴
+  ctx.fillStyle = '#333';
+  ctx.beginPath();
+  ctx.moveTo(sx + 26, sy - 14);
+  ctx.lineTo(sx + 34, sy - 12);
+  ctx.lineTo(sx + 26, sy - 10);
+  ctx.fill();
+  
+  // 眼睛（红色）
+  ctx.fillStyle = '#F44336';
+  ctx.beginPath();
+  ctx.arc(sx + 22, sy - 18, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#FFEB3B';
+  ctx.beginPath();
+  ctx.arc(sx + 22, sy - 18, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 腿
+  ctx.fillStyle = '#4E342E';
+  ctx.fillRect(sx - 12, sy - 2 + runFrame, 5, 10);
+  ctx.fillRect(sx - 2, sy - 2 - runFrame, 5, 10);
+  ctx.fillRect(sx + 8, sy - 2 + runFrame, 5, 10);
+  ctx.fillRect(sx + 16, sy - 2 - runFrame, 5, 10);
+  
+  // 尾巴
+  ctx.strokeStyle = '#5D4037';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(sx - 20, sy - 12);
+  ctx.quadraticCurveTo(sx - 30, sy - 25, sx - 25, sy - 30);
+  ctx.stroke();
+}
+
+function drawBullet(o) {
+  const sx = o.x - game.camera.x;
+  const sy = o.y - game.camera.y;
+  
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 弹道尾迹
+  ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(sx + 15, sy);
+  ctx.stroke();
+}
+
+// ==================== 道具绘制 ====================
+
+function drawPowerup(p) {
+  const sx = p.x - game.camera.x;
+  const sy = p.y - game.camera.y + Math.sin(game.time * 0.05 + p.x) * 5;
+  
+  // 光环
+  ctx.fillStyle = `rgba(255, 255, 200, ${0.2 + Math.sin(game.time * 0.08) * 0.1})`;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 18, 0, Math.PI * 2);
+  ctx.fill();
+  
+  switch(p.type) {
+    case 'armor':
+      // 盔甲
+      ctx.fillStyle = '#9E9E9E';
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - 12);
+      ctx.lineTo(sx - 12, sy - 4);
+      ctx.lineTo(sx - 10, sy + 10);
+      ctx.lineTo(sx, sy + 14);
+      ctx.lineTo(sx + 10, sy + 10);
+      ctx.lineTo(sx + 12, sy - 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#616161';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // 十字装饰
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - 6);
+      ctx.lineTo(sx, sy + 6);
+      ctx.moveTo(sx - 5, sy);
+      ctx.lineTo(sx + 5, sy);
+      ctx.stroke();
+      break;
+      
+    case 'helmet':
+      // 头盔
+      ctx.fillStyle = '#666';
+      ctx.beginPath();
+      ctx.arc(sx, sy - 2, 12, Math.PI, 0);
+      ctx.fill();
+      ctx.fillRect(sx - 14, sy - 2, 28, 4);
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // 面罩
+      ctx.fillStyle = 'rgba(100,200,255,0.4)';
+      ctx.beginPath();
+      ctx.arc(sx + 3, sy, 7, -0.5, 0.8);
+      ctx.fill();
+      break;
+      
+    case 'waterproof':
+      // 雨衣
+      ctx.fillStyle = '#2196F3';
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - 14);
+      ctx.lineTo(sx - 14, sy + 8);
+      ctx.lineTo(sx, sy + 14);
+      ctx.lineTo(sx + 14, sy + 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#1565C0';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // 帽子
+      ctx.fillStyle = '#1E88E5';
+      ctx.beginPath();
+      ctx.arc(sx, sy - 10, 8, Math.PI, 0);
+      ctx.fill();
+      break;
+      
+    case 'food':
+      // 食物（面包）
+      ctx.fillStyle = '#D4A574';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, 10, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#C49464';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy - 2, 10, 4, 0, Math.PI, 0);
+      ctx.fill();
+      // 高光
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.beginPath();
+      ctx.ellipse(sx - 3, sy - 4, 4, 2, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+      
+    case 'immunity':
+      // 免疫药水
+      ctx.fillStyle = 'rgba(0, 255, 100, 0.3)';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#4CAF50';
+      ctx.beginPath();
+      ctx.moveTo(sx - 6, sy - 2);
+      ctx.quadraticCurveTo(sx, sy - 14, sx + 6, sy - 2);
+      ctx.quadraticCurveTo(sx, sy + 10, sx - 6, sy - 2);
+      ctx.fill();
+      // 瓶口
+      ctx.fillStyle = '#795548';
+      ctx.fillRect(sx - 3, sy - 14, 6, 4);
+      // 十字
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - 8);
+      ctx.lineTo(sx, sy - 1);
+      ctx.moveTo(sx - 3, sy - 4);
+      ctx.lineTo(sx + 3, sy - 4);
+      ctx.stroke();
+      break;
+  }
+}
+
+// ==================== 天气效果 ====================
+
+function drawWeather() {
+  if (!activeEvent) return;
+  
+  switch(activeEvent.type) {
+    case 'storm':
+      // 暴风雨
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(0, 0, W, H);
+      
+      // 雨滴
+      ctx.strokeStyle = 'rgba(150,200,255,0.6)';
+      ctx.lineWidth = 1;
+      for (let r of weatherParticles) {
+        const sx = r.x - game.camera.x * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(sx, r.y);
+        ctx.lineTo(sx - 3, r.y + 10);
+        ctx.stroke();
+      }
+      
+      // 闪电
+      if (Math.random() < 0.005) {
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.fillRect(0, 0, W, H);
+        setTimeout(() => {}, 50);
+      }
+      break;
+      
+    case 'snow':
+      // 暴雪
+      ctx.fillStyle = 'rgba(200,220,255,0.15)';
+      ctx.fillRect(0, 0, W, H);
+      
+      ctx.fillStyle = 'white';
+      for (let s of weatherParticles) {
+        const sx = s.x - game.camera.x * 0.3;
+        ctx.beginPath();
+        ctx.arc(sx, s.y, s.size || 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+      
+    case 'heatwave':
+      // 热浪
+      ctx.fillStyle = 'rgba(255,100,0,0.1)';
+      ctx.fillRect(0, 0, W, H);
+      
+      // 热浪扭曲线条
+      ctx.strokeStyle = 'rgba(255,150,50,0.2)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        for (let x = 0; x < W; x += 5) {
+          const y = H - 50 + Math.sin((x + game.time * 2 + i * 100) * 0.02) * 15;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      break;
+  }
+}
+
+// ==================== 通知/播报系统 ====================
+
+function addNotification(text, type, duration) {
+  notifications.push({
+    text: text,
+    type: type, // 'danger', 'help', 'info', 'warning'
+    timer: duration || 180,
+    alpha: 1,
+    y: 0
+  });
+}
+
+function drawNotifications() {
+  let ny = 100;
+  for (let i = notifications.length - 1; i >= 0; i--) {
+    const n = notifications[i];
+    n.timer--;
+    if (n.timer < 30) n.alpha = n.timer / 30;
+    if (n.timer <= 0) { notifications.splice(i, 1); continue; }
+    
+    const targetY = ny;
+    n.y += (targetY - n.y) * 0.1;
+    ny += 55;
+    
+    ctx.save();
+    ctx.globalAlpha = n.alpha;
+    
+    // 背景条
+    let bgColor, borderColor, icon;
+    switch(n.type) {
+      case 'danger':
+        bgColor = 'rgba(244,67,54,0.85)';
+        borderColor = '#F44336';
+        icon = '⚠️';
+        break;
+      case 'help':
+        bgColor = 'rgba(76,175,80,0.85)';
+        borderColor = '#4CAF50';
+        icon = '🎁';
+        break;
+      case 'warning':
+        bgColor = 'rgba(255,152,0,0.85)';
+        borderColor = '#FF9800';
+        icon = '⚡';
+        break;
+      default:
+        bgColor = 'rgba(33,150,243,0.85)';
+        borderColor = '#2196F3';
+        icon = 'ℹ️';
+    }
+    
+    // 通知框
+    const textW = ctx.measureText(n.text).width;
+    const boxW = Math.max(textW + 80, 300);
+    const boxX = (W - boxW) / 2;
+    
+    ctx.fillStyle = bgColor;
+    roundRect(ctx, boxX, n.y, boxW, 45, 10);
+    ctx.fill();
+    
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 2;
+    roundRect(ctx, boxX, n.y, boxW, 45, 10);
+    ctx.stroke();
+    
+    // 图标和文字
+    ctx.font = 'bold 16px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${icon} ${n.text}`, W / 2, n.y + 23);
+    
+    ctx.restore();
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ==================== UI 绘制 ====================
+
+function drawUI() {
+  const lvl = LEVELS[game.currentLevel];
+  const levelDistStart = game.currentLevel * LEVEL_DISTANCE;
+  const levelDistEnd = (game.currentLevel + 1) * LEVEL_DISTANCE;
+  const levelProgress = Math.min((game.distance - levelDistStart) / LEVEL_DISTANCE, 1);
+  
+  // 左上角状态面板
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  roundRect(ctx, 10, 10, 260, 160, 10);
+  ctx.fill();
+  
+  // 关卡标题
+  ctx.font = 'bold 15px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = lvl.color;
+  ctx.textAlign = 'left';
+  ctx.fillText(`🎮 第${game.currentLevel + 1}关「${lvl.name}」`, 20, 30);
+  
+  // 关卡进度条
+  const levelDist = Math.max(0, game.distance - levelDistStart);
+  drawBar(20, 38, 240, 14, levelDist, LEVEL_DISTANCE, lvl.color, shadeColor(lvl.color, -30), `关卡进度 ${Math.floor(levelProgress * 100)}%`);
+  
+  // 血条
+  drawBar(20, 62, 240, 14, duck.health, duck.maxHealth, '#F44336', '#E53935', '❤️ 生命');
+  
+  // 饥饿值
+  drawBar(20, 84, 240, 14, duck.hunger, duck.maxHunger, '#FF9800', '#F57C00', '🍗 饥饿');
+  
+  // 距离/分数
+  ctx.font = 'bold 13px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'left';
+  ctx.fillText(`📏 攀登距离: ${Math.floor(game.distance)}m  ⭐ 分数: ${game.score}`, 20, 118);
+  
+  // 总进度条（10关）
+  const totalProgress = Math.min(game.distance / game.goalDistance, 1);
+  drawBar(20, 128, 240, 14, game.distance, game.goalDistance, '#4FC3F7', '#0288D1', `🏁 总进度 ${Math.floor(totalProgress * 100)}% (${game.currentLevel + 1}/${TOTAL_LEVELS}关)`);
+  
+  // 关卡小圆点指示器
+  const dotStartX = 20;
+  const dotY = 155;
+  for (let i = 0; i < TOTAL_LEVELS; i++) {
+    const dx = dotStartX + i * 24;
+    ctx.beginPath();
+    ctx.arc(dx + 6, dotY, 5, 0, Math.PI * 2);
+    if (game.levelCleared[i]) {
+      ctx.fillStyle = '#4CAF50';
+    } else if (i === game.currentLevel) {
+      ctx.fillStyle = '#FFD93D';
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    }
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  
+  // 右上角装备栏
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  roundRect(ctx, W - 230, 10, 220, 95, 10);
+  ctx.fill();
+  
+  ctx.font = '13px "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'left';
+  let ey = 30;
+  
+  // 盔甲
+  ctx.fillStyle = duck.hasArmor ? '#4CAF50' : '#666';
+  ctx.fillText(`${duck.hasArmor ? '🛡️' : '⬜'} 盔甲 ${duck.hasArmor ? '(' + duck.armorDurability + ')' : ''}`, W - 220, ey);
+  ey += 20;
+  
+  // 头盔
+  ctx.fillStyle = duck.hasHelmet ? '#4CAF50' : '#666';
+  ctx.fillText(`${duck.hasHelmet ? '⛑️' : '⬜'} 头盔 ${duck.hasHelmet ? '(' + duck.helmetDurability + ')' : ''}`, W - 220, ey);
+  ey += 20;
+  
+  // 防水
+  ctx.fillStyle = duck.hasWaterproof ? '#4CAF50' : '#666';
+  ctx.fillText(`${duck.hasWaterproof ? '🧥' : '⬜'} 防水服 ${duck.hasWaterproof ? '(' + duck.waterproofDurability + ')' : ''}`, W - 220, ey);
+  ey += 20;
+  
+  // 免疫
+  ctx.fillStyle = duck.immunity > 0 ? '#4CAF50' : '#666';
+  ctx.fillText(`${duck.immunity > 0 ? '💊' : '⬜'} 免疫 ${duck.immunity > 0 ? '(' + Math.ceil(duck.immunity / 60) + 's)' : ''}`, W - 220, ey);
+  
+  // 当前事件提示
+  if (activeEvent) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    roundRect(ctx, W/2 - 120, H - 50, 240, 35, 8);
+    ctx.fill();
+    ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = '#FFD93D';
+    ctx.textAlign = 'center';
+    ctx.fillText(activeEvent.name, W/2, H - 28);
+  }
+}
+
+function drawBar(x, y, w, h, value, max, color1, color2, label) {
+  // 背景
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  roundRect(ctx, x, y, w, h, 4);
+  ctx.fill();
+  
+  // 填充
+  const fillW = (value / max) * (w - 4);
+  if (fillW > 0) {
+    const grad = ctx.createLinearGradient(x, y, x + fillW, y);
+    grad.addColorStop(0, color1);
+    grad.addColorStop(1, color2);
+    ctx.fillStyle = grad;
+    roundRect(ctx, x + 2, y + 2, fillW, h - 4, 3);
+    ctx.fill();
+  }
+  
+  // 标签
+  ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${label} ${Math.ceil(value)}/${max}`, x + w/2, y + h/2);
+}
+
+// ==================== 粒子系统 ====================
+
+function addParticle(x, y, color, count, spread) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: x, y: y,
+      vx: (Math.random() - 0.5) * spread,
+      vy: (Math.random() - 0.5) * spread - 2,
+      life: 30 + Math.random() * 30,
+      maxLife: 60,
+      color: color,
+      size: 2 + Math.random() * 3
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1;
+    p.life--;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    const sx = p.x - game.camera.x;
+    const sy = p.y - game.camera.y;
+    ctx.globalAlpha = p.life / p.maxLife;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(sx, sy, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ==================== 世界生成 ====================
+
+function generateWorld() {
+  const genAhead = game.camera.x + W + 500;
+  const lvl = LEVELS[game.currentLevel];
+  
+  while (terrainGen.generatedUpTo < genAhead) {
+    // 生成平台（根据关卡难度调整间距和宽度）
+    const gap = lvl.gap + Math.random() * 40;
+    const px = terrainGen.lastPlatformX + gap;
+    const py = terrainGen.lastPlatformY + (Math.random() - 0.5) * 60;
+    const clampedY = Math.max(300, Math.min(520, py));
+    const pw = lvl.platW[0] + Math.random() * (lvl.platW[1] - lvl.platW[0]);
+    
+    platforms.push({
+      x: px, y: clampedY, w: pw, h: 20
+    });
+    
+    terrainGen.lastPlatformX = px + pw;
+    terrainGen.lastPlatformY = clampedY;
+    
+    // 生成困难事件（根据关卡间距）
+    if (terrainGen.lastPlatformX > terrainGen.nextEventDistance) {
+      generateEvent(terrainGen.lastPlatformX);
+      terrainGen.nextEventDistance += lvl.eventGap + Math.random() * 200;
+      terrainGen.nextEventDistance = Math.max(terrainGen.nextEventDistance, terrainGen.lastPlatformX + 300);
+    }
+    
+    // 生成援助道具
+    if (terrainGen.lastPlatformX > terrainGen.nextPowerupDistance) {
+      generatePowerup(terrainGen.lastPlatformX);
+      terrainGen.nextPowerupDistance += lvl.powerupGap + Math.random() * 150;
+    }
+    
+    terrainGen.generatedUpTo = px + pw;
+  }
+  
+  // 清理远离的对象
+  const cleanX = game.camera.x - 300;
+  platforms = platforms.filter(p => p.x + p.w > cleanX);
+  obstacles = obstacles.filter(o => o.x > cleanX);
+  powerups = powerups.filter(p => p.x > cleanX);
+  enemies = enemies.filter(e => e.x > cleanX);
+  projectiles = projectiles.filter(p => p.x > cleanX);
+}
+
+function generateEvent(x) {
+  const lvl = LEVELS[game.currentLevel];
+  const eventTypes = ['hunter', 'wolves', 'food_crisis', 'storm', 'snow', 'heatwave'];
+  
+  // 根据关卡主题设置权重（主要威胁权重更高）
+  let weights = [1, 1, 1, 1, 1, 1];
+  switch(lvl.mainThreat) {
+    case 'hunter': weights = [4, 2, 1, 1, 0.5, 0.5]; break;
+    case 'wolves':  weights = [1, 4, 1, 1, 1, 0.5]; break;
+    case 'storm':   weights = [1, 1, 1, 4, 2, 0.5]; break;
+    case 'snow':    weights = [1, 1, 1, 2, 4, 0.5]; break;
+    case 'food_crisis': weights = [1, 1, 4, 1, 1, 1]; break;
+    case 'heatwave': weights = [1, 1, 2, 0.5, 0.5, 4]; break;
+    case 'all':     weights = [2, 2, 2, 2, 2, 2]; break;
+  }
+  
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * totalWeight;
+  let type = eventTypes[0];
+  for (let i = 0; i < eventTypes.length; i++) {
+    r -= weights[i];
+    if (r <= 0) { type = eventTypes[i]; break; }
+  }
+  
+  switch(type) {
+    case 'hunter':
+      // 猎人 + 子弹
+      const hunterX = x + 200;
+      enemies.push({
+        type: 'hunter',
+        x: hunterX, y: 400,
+        w: 30, h: 50,
+        shootTimer: 60,
+        active: true
+      });
+      break;
+      
+    case 'wolves':
+      // 狼群
+      for (let i = 0; i < 2 + Math.floor(game.difficulty * 0.5); i++) {
+        enemies.push({
+          type: 'wolf',
+          x: x + 200 + i * 80,
+          y: 400 + Math.random() * 60,
+          w: 40, h: 30,
+          speed: 1.5 + game.difficulty * 0.2,
+          active: true
+        });
+      }
+      break;
+      
+    case 'food_crisis':
+      // 食物危机 - 减少饥饿值
+      obstacles.push({
+        type: 'food_crisis',
+        x: x + 100, y: 300,
+        w: 300, h: 200,
+        active: true
+      });
+      break;
+      
+    case 'storm':
+      obstacles.push({
+        type: 'storm_zone',
+        x: x + 100, y: 0,
+        w: 400, h: H,
+        active: true
+      });
+      break;
+      
+    case 'snow':
+      obstacles.push({
+        type: 'snow_zone',
+        x: x + 100, y: 0,
+        w: 400, h: H,
+        active: true
+      });
+      break;
+      
+    case 'heatwave':
+      obstacles.push({
+        type: 'heat_zone',
+        x: x + 100, y: 0,
+        w: 400, h: H,
+        active: true
+      });
+      break;
+  }
+}
+
+function generatePowerup(x) {
+  const types = ['armor', 'helmet', 'waterproof', 'food', 'immunity'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  
+  powerups.push({
+    type: type,
+    x: x + Math.random() * 100,
+    y: 350 + Math.random() * 80,
+    w: 24, h: 24,
+    collected: false
+  });
+}
+
+// ==================== 天气粒子 ====================
+
+function updateWeatherParticles() {
+  if (!activeEvent) {
+    weatherParticles = [];
+    return;
+  }
+  
+  switch(activeEvent.type) {
+    case 'storm':
+      // 添加雨滴
+      for (let i = 0; i < 5; i++) {
+        weatherParticles.push({
+          x: game.camera.x + Math.random() * W,
+          y: -10,
+          vx: -2,
+          vy: 8 + Math.random() * 4
+        });
+      }
+      break;
+      
+    case 'snow':
+      // 添加雪花
+      if (Math.random() < 0.3) {
+        weatherParticles.push({
+          x: game.camera.x + Math.random() * W,
+          y: -10,
+          vx: Math.random() * 2 - 1,
+          vy: 1 + Math.random() * 2,
+          size: 1 + Math.random() * 3
+        });
+      }
+      break;
+  }
+  
+  // 更新粒子
+  for (let i = weatherParticles.length - 1; i >= 0; i--) {
+    const p = weatherParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.y > H + 10 || p.x < game.camera.x - 50) {
+      weatherParticles.splice(i, 1);
+    }
+  }
+  
+  // 限制粒子数量
+  if (weatherParticles.length > 300) {
+    weatherParticles.splice(0, weatherParticles.length - 300);
+  }
+}
+
+// ==================== 游戏逻辑 ====================
+
+function updateDuck() {
+  // 输入处理
+  const moveSpeed = 4;
+  duck.walking = false;
+  
+  if (keys['ArrowLeft'] || keys['KeyA']) {
+    duck.vx = -moveSpeed;
+    duck.facing = -1;
+    duck.walking = true;
+  } else if (keys['ArrowRight'] || keys['KeyD']) {
+    duck.vx = moveSpeed;
+    duck.facing = 1;
+    duck.walking = true;
+  } else {
+    duck.vx *= 0.7;
+  }
+  
+  if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && duck.onGround) {
+    duck.vy = -12;
+    duck.onGround = false;
+  }
+  
+  // 重力
+  duck.vy += 0.6;
+  if (duck.vy > 15) duck.vy = 15;
+  
+  // 移动
+  duck.x += duck.vx;
+  duck.y += duck.vy;
+  
+  // 平台碰撞
+  duck.onGround = false;
+  for (const p of platforms) {
+    if (duck.x + duck.w > p.x && duck.x < p.x + p.w) {
+      if (duck.y + duck.h > p.y && duck.y + duck.h < p.y + p.h + 10 && duck.vy >= 0) {
+        duck.y = p.y - duck.h;
+        duck.vy = 0;
+        duck.onGround = true;
+      }
+    }
+  }
+  
+  // 掉落检测 → 弹出选择面板
+  if (duck.y > H + 100) {
+    showFallScreen();
+    return;
+  }
+  
+  // 防止跑到太左边
+  if (duck.x < game.camera.x - 50) {
+    duck.x = game.camera.x - 50;
+  }
+  
+  // 动画
+  if (duck.walking) {
+    duck.animTimer++;
+    if (duck.animTimer > 5) {
+      duck.animFrame++;
+      duck.animTimer = 0;
+    }
+  }
+  
+  // 计时器
+  if (duck.blinkTimer > 0) duck.blinkTimer--;
+  if (duck.hurtTimer > 0) duck.hurtTimer--;
+  if (duck.invincible > 0) duck.invincible--;
+  if (duck.immunity > 0) duck.immunity--;
+  if (duck.speedBoost > 0) duck.speedBoost--;
+  
+  // 装备耐久
+  if (duck.hasArmor) {
+    duck.armorDurability--;
+    if (duck.armorDurability <= 0) {
+      duck.hasArmor = false;
+      addNotification('盔甲已损坏！', 'warning');
+    }
+  }
+  if (duck.hasHelmet) {
+    duck.helmetDurability--;
+    if (duck.helmetDurability <= 0) {
+      duck.hasHelmet = false;
+      addNotification('头盔已损坏！', 'warning');
+    }
+  }
+  if (duck.hasWaterproof) {
+    duck.waterproofDurability--;
+    if (duck.waterproofDurability <= 0) {
+      duck.hasWaterproof = false;
+      addNotification('防水套装已失效！', 'warning');
+    }
+  }
+  
+  // 饥饿值自然下降
+  duck.hunger -= 0.02;
+  if (duck.hunger <= 0) {
+    duck.hunger = 0;
+    duck.health -= 0.1;
+  }
+  
+  // 无敌闪烁
+  if (duck.invincible > 0 && duck.invincible % 6 < 3) {
+    duck.invincible = duck.invincible; // 用于绘制闪烁
+  }
+}
+
+function damageDuck(amount, source) {
+  if (duck.invincible > 0) return;
+  
+  // 装备减伤
+  if (duck.hasArmor && source === 'physical') {
+    amount *= 0.3;
+    duck.armorDurability -= 20;
+  }
+  if (duck.hasHelmet && source === 'headshot') {
+    amount *= 0.2;
+    duck.helmetDurability -= 30;
+  }
+  if (duck.immunity > 0) {
+    amount *= 0.3;
+  }
+  
+  duck.health -= amount;
+  duck.hurtTimer = 20;
+  duck.invincible = 40;
+  
+  addParticle(duck.x + 20, duck.y + 17, '#FF4444', 8, 4);
+  
+  if (duck.health <= 0) {
+    duck.health = 0;
+    gameOver();
+  }
+}
+
+function updateEnemies() {
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    const sx = e.x - game.camera.x;
+    
+    // 只更新屏幕附近的敌人
+    if (sx < -100 || sx > W + 200) continue;
+    
+    switch(e.type) {
+      case 'hunter':
+        // 猎人射击
+        e.shootTimer--;
+        if (e.shootTimer <= 0 && sx > 0 && sx < W) {
+          e.shootTimer = 90 - game.difficulty * 5;
+          projectiles.push({
+            x: e.x - 15,
+            y: e.y - 15,
+            vx: -6 - game.difficulty * 0.5,
+            vy: 0,
+            damage: 15,
+            source: 'headshot'
+          });
+          addParticle(e.x - 15, e.y - 15, '#FFD700', 3, 2);
+        }
+        break;
+        
+      case 'wolf':
+        // 狼追捕鸭子
+        const dx = duck.x - e.x;
+        const dy = duck.y - e.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist < 300) {
+          e.x += (dx / dist) * e.speed;
+          e.y += (dy / dist) * e.speed * 0.5;
+        }
+        
+        // 碰撞检测
+        if (Math.abs(duck.x + 20 - e.x) < 30 && Math.abs(duck.y + 17 - e.y) < 25) {
+          damageDuck(10, 'physical');
+          // 击退
+          duck.vx = duck.x > e.x ? 8 : -8;
+          duck.vy = -5;
+        }
+        break;
+    }
+  }
+}
+
+function updateProjectiles() {
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const p = projectiles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    
+    // 碰撞检测
+    if (Math.abs(duck.x + 20 - p.x) < 20 && Math.abs(duck.y + 17 - p.y) < 20) {
+      damageDuck(p.damage, p.source);
+      projectiles.splice(i, 1);
+      continue;
+    }
+    
+    // 超出范围
+    if (p.x < game.camera.x - 100) {
+      projectiles.splice(i, 1);
+    }
+  }
+}
+
+function updateObstacles() {
+  for (const o of obstacles) {
+    const sx = o.x - game.camera.x;
+    
+    // 检测鸭子是否在区域内
+    if (duck.x + 20 > o.x && duck.x + 20 < o.x + o.w) {
+      switch(o.type) {
+        case 'food_crisis':
+          duck.hunger -= 0.15;
+          break;
+        case 'storm_zone':
+          if (!duck.hasWaterproof) {
+            duck.health -= 0.08;
+            if (game.time % 120 === 0) damageDuck(3, 'physical');
+          }
+          break;
+        case 'snow_zone':
+          if (!duck.hasWaterproof) {
+            duck.speedBoost = 0;
+            duck.vx *= 0.95;
+            duck.health -= 0.05;
+          }
+          break;
+        case 'heat_zone':
+          duck.hunger -= 0.08;
+          if (duck.immunity <= 0) {
+            duck.health -= 0.05;
+          }
+          break;
+      }
+    }
+  }
+}
+
+function updatePowerups() {
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    const p = powerups[i];
+    if (p.collected) continue;
+    
+    // 碰撞检测
+    if (Math.abs(duck.x + 20 - p.x) < 25 && Math.abs(duck.y + 17 - p.y) < 25) {
+      p.collected = true;
+      collectPowerup(p);
+      addParticle(p.x, p.y, '#FFD700', 15, 5);
+      powerups.splice(i, 1);
+    }
+  }
+}
+
+function collectPowerup(p) {
+  switch(p.type) {
+    case 'armor':
+      duck.hasArmor = true;
+      duck.armorDurability = 600;
+      addNotification('获得保护盔甲！减少物理伤害', 'help');
+      break;
+    case 'helmet':
+      duck.hasHelmet = true;
+      duck.helmetDurability = 500;
+      addNotification('获得防御头盔！抵御远程攻击', 'help');
+      break;
+    case 'waterproof':
+      duck.hasWaterproof = true;
+      duck.waterproofDurability = 700;
+      addNotification('获得防水套装！抵御恶劣天气', 'help');
+      break;
+    case 'food':
+      duck.hunger = Math.min(duck.maxHunger, duck.hunger + 40);
+      duck.health = Math.min(duck.maxHealth, duck.health + 10);
+      addNotification('天降食物！恢复饥饿值和生命', 'help');
+      break;
+    case 'immunity':
+      duck.immunity = 600;
+      addNotification('获得免疫增益！减少所有伤害', 'help');
+      break;
+  }
+}
+
+function updateActiveEvent() {
+  // 检测当前区域的事件
+  const duckWorldX = duck.x;
+  let inEvent = false;
+  
+  for (const o of obstacles) {
+    if (duckWorldX > o.x && duckWorldX < o.x + o.w) {
+      switch(o.type) {
+        case 'storm_zone':
+          if (!activeEvent || activeEvent.type !== 'storm') {
+            activeEvent = { type: 'storm', name: '⛈️ 暴风雨来袭！' };
+            addNotification('暴风雨来袭！注意防水！', 'danger', 150);
+          }
+          inEvent = true;
+          break;
+        case 'snow_zone':
+          if (!activeEvent || activeEvent.type !== 'snow') {
+            activeEvent = { type: 'snow', name: '❄️ 暴雪降临！' };
+            addNotification('暴雪降临！注意保暖！', 'danger', 150);
+          }
+          inEvent = true;
+          break;
+        case 'heat_zone':
+          if (!activeEvent || activeEvent.type !== 'heatwave') {
+            activeEvent = { type: 'heatwave', name: '🔥 热浪来袭！' };
+            addNotification('热浪来袭！注意防暑！', 'danger', 150);
+          }
+          inEvent = true;
+          break;
+        case 'food_crisis':
+          if (!activeEvent || activeEvent.type !== 'food_crisis') {
+            activeEvent = { type: 'food_crisis', name: '🌾 食物危机！' };
+            addNotification('进入食物荒芜地带！饥饿值加速下降！', 'danger', 150);
+          }
+          inEvent = true;
+          break;
+      }
+    }
+  }
+  
+  // 检测猎人/狼
+  for (const e of enemies) {
+    const dist = Math.abs(duck.x - e.x);
+    if (dist < 300) {
+      if (e.type === 'hunter' && (!activeEvent || activeEvent.type !== 'hunter')) {
+        activeEvent = { type: 'hunter', name: '🔫 猎人出没！' };
+        addNotification('警告：猎人正在射击！小心子弹！', 'danger', 150);
+      }
+      if (e.type === 'wolf' && (!activeEvent || activeEvent.type !== 'wolves')) {
+        activeEvent = { type: 'wolves', name: '🐺 狼群追捕！' };
+        addNotification('狼群正在追捕你！快跑！', 'danger', 150);
+      }
+      inEvent = true;
+    }
+  }
+  
+  if (!inEvent) {
+    activeEvent = null;
+  }
+}
+
+function updateCamera() {
+  // 相机跟随鸭子
+  const targetX = duck.x - 200;
+  game.camera.x += (targetX - game.camera.x) * 0.08;
+  
+  // 更新距离
+  game.distance = Math.max(game.distance, duck.x / 10);
+  game.maxDistance = game.distance;
+  
+  // 分数 = 攀登距离
+  game.score = Math.floor(game.maxDistance);
+  
+  // 使用当前关卡难度
+  const lvl = LEVELS[game.currentLevel];
+  game.difficulty = lvl.difficulty;
+  game.speed = game.baseSpeed + game.difficulty * 0.3;
+  
+  // 关卡切换检测
+  const newLevel = Math.min(Math.floor(game.distance / LEVEL_DISTANCE), TOTAL_LEVELS - 1);
+  if (newLevel > game.currentLevel && !game.levelTransitioning) {
+    game.levelTransitioning = true;
+    const clearedLevel = game.currentLevel;
+    game.levelCleared[clearedLevel] = true;
+    game.currentLevel = newLevel;
+    game.levelStartX = duck.x;
+    
+    // 重置地形生成器，让新关卡从当前位置开始生成
+    terrainGen.nextEventDistance = duck.x + 300;
+    terrainGen.nextPowerupDistance = duck.x + 200;
+    
+    const newLvl = LEVELS[game.currentLevel];
+    addNotification(`✅ 第${clearedLevel + 1}关「${LEVELS[clearedLevel].name}」通过！`, 'help', 180);
+    addNotification(`🎮 进入第${game.currentLevel + 1}关「${newLvl.name}」— ${newLvl.desc}`, 'warning', 200);
+    
+    // 清除旧关卡的敌人和障碍
+    enemies = [];
+    projectiles = [];
+    obstacles = [];
+    
+    setTimeout(() => { game.levelTransitioning = false; }, 500);
+  }
+  
+  // 终点检测（通过全部10关）
+  if (game.maxDistance >= game.goalDistance && !game.reachedGoal) {
+    game.reachedGoal = true;
+    game.levelCleared[game.currentLevel] = true;
+    addNotification('🎉 恭喜！鸭子征服了所有关卡！', 'help', 300);
+    addNotification(`🏆 最终分数: ${game.score} 分！`, 'info', 300);
+    setTimeout(() => {
+      if (game.running) gameOver();
+    }, 3000);
+  }
+}
+
+// ==================== 游戏流程 ====================
+
+function startGame() {
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('fallScreen').style.display = 'none';
+  
+  // 重置游戏状态
+  game = {
+    running: true,
+    paused: false,
+    camera: { x: 0, y: 0 },
+    distance: 0,
+    speed: 2,
+    baseSpeed: 2,
+    time: 0,
+    difficulty: 1,
+    eventsTriggered: 0,
+    maxDistance: 0,
+    score: 0,
+    goalDistance: TOTAL_LEVELS * LEVEL_DISTANCE,
+    reachedGoal: false,
+    currentLevel: 0,
+    levelStartX: 0,
+    levelTransitioning: false,
+    levelCleared: new Array(TOTAL_LEVELS).fill(false)
+  };
+  
+  duck = {
+    x: 150, y: 400, w: 40, h: 35,
+    vx: 0, vy: 0,
+    onGround: false,
+    health: 100, maxHealth: 100,
+    hunger: 100, maxHunger: 100,
+    immunity: 0,
+    facing: 1,
+    animFrame: 0, animTimer: 0,
+    walking: false,
+    invincible: 60,
+    hasArmor: false, armorDurability: 0,
+    hasHelmet: false, helmetDurability: 0,
+    hasWaterproof: false, waterproofDurability: 0,
+    speedBoost: 0,
+    shieldActive: false, shieldTimer: 0,
+    blinkTimer: 0,
+    hurtTimer: 0,
+    quackTimer: 0
+  };
+  
+  platforms = [];
+  obstacles = [];
+  powerups = [];
+  particles = [];
+  weatherParticles = [];
+  notifications = [];
+  enemies = [];
+  projectiles = [];
+  activeEvent = null;
+  
+  terrainGen = {
+    lastPlatformX: 0,
+    lastPlatformY: 400,
+    nextEventDistance: 800,
+    nextPowerupDistance: 400,
+    generatedUpTo: 0
+  };
+  
+  // 初始平台
+  platforms.push({ x: 50, y: 450, w: 300, h: 20 });
+  terrainGen.lastPlatformX = 350;
+  terrainGen.lastPlatformY = 450;
+  terrainGen.generatedUpTo = 350;
+  
+  addNotification('🦆 倔强小鸭出发了！加油闯天涯！', 'info', 180);
+  addNotification(`🎮 第1关「${LEVELS[0].name}」— ${LEVELS[0].desc}`, 'warning', 200);
+  
+  if (!gameLoopRunning) {
+    gameLoopRunning = true;
+    gameLoop();
+  }
+}
+
+function gameOver() {
+  game.running = false;
+  const isVictory = game.reachedGoal;
+  const finalDist = Math.floor(game.maxDistance);
+  const clearedCount = game.levelCleared.filter(c => c).length;
+  
+  document.getElementById('gameOverScreen').querySelector('h1').textContent = 
+    isVictory ? '🎉 恭喜通关！' : '💀 冒险结束';
+  document.getElementById('gameOverScreen').querySelector('h1').style.color = 
+    isVictory ? '#4CAF50' : '#ff6b6b';
+  
+  document.getElementById('finalScore').textContent = 
+    isVictory ? `🏆 最终分数: ${finalDist} 分（完美通关！）` : `🏆 最终分数: ${finalDist} 分`;
+  
+  // 生成关卡通过情况
+  let levelSummary = '';
+  for (let i = 0; i < TOTAL_LEVELS; i++) {
+    const icon = game.levelCleared[i] ? '✅' : (i <= game.currentLevel ? '❌' : '⬜');
+    levelSummary += `${icon} 第${i+1}关「${LEVELS[i].name}」  `;
+    if ((i + 1) % 2 === 0) levelSummary += '<br>';
+  }
+  
+  document.getElementById('finalStats').innerHTML = `
+    📏 最远攀登距离: ${finalDist}m<br>
+    🏆 通过关卡: ${clearedCount}/${TOTAL_LEVELS}<br>
+    ⚔️ 最终挑战关卡: 第${game.currentLevel + 1}关「${LEVELS[game.currentLevel].name}」<br>
+    <br>${levelSummary}
+  `;
+  document.getElementById('gameOverScreen').style.display = 'flex';
+}
+
+// ==================== 坠落选择系统 ====================
+
+function showFallScreen() {
+  game.paused = true;
+  game.running = false;
+  
+  const currentDist = Math.floor(game.maxDistance);
+  const lvl = LEVELS[game.currentLevel];
+  document.getElementById('fallDistance').textContent = currentDist;
+  document.getElementById('fallHealth').textContent = Math.ceil(Math.max(0, duck.health));
+  document.getElementById('fallInfo').innerHTML = `
+    第${game.currentLevel + 1}关「${lvl.name}」— ${lvl.desc}<br>
+    当前攀登距离: <span id="fallDistance">${currentDist}</span>m<br>
+    重新挑战将从本关起点开始
+  `;
+  document.getElementById('fallScreen').style.display = 'flex';
+}
+
+function retryFromFall() {
+  document.getElementById('fallScreen').style.display = 'none';
+  
+  // 从当前关卡起点重玩
+  restartCurrentLevel();
+}
+
+function restartCurrentLevel() {
+  // 计算当前关卡起点的世界X坐标
+  const levelDistStart = game.currentLevel * LEVEL_DISTANCE;
+  const levelStartWorldX = levelDistStart * 10; // 距离转像素（1m = 10px）
+  
+  // 重置鸭子到关卡起点
+  duck.x = levelStartWorldX + 150;
+  duck.y = 400;
+  duck.vx = 0;
+  duck.vy = 0;
+  duck.onGround = false;
+  duck.health = 100;
+  duck.hunger = 100;
+  duck.invincible = 90;
+  duck.hurtTimer = 0;
+  duck.immunity = 0;
+  duck.hasArmor = false;
+  duck.hasHelmet = false;
+  duck.hasWaterproof = false;
+  duck.speedBoost = 0;
+  
+  // 重置距离到关卡起点
+  game.distance = levelDistStart;
+  game.maxDistance = levelDistStart;
+  game.score = levelDistStart;
+  game.levelStartX = levelStartWorldX;
+  
+  // 清除所有世界对象，重新生成
+  platforms = [];
+  obstacles = [];
+  powerups = [];
+  enemies = [];
+  projectiles = [];
+  particles = [];
+  weatherParticles = [];
+  activeEvent = null;
+  
+  // 重置地形生成器
+  terrainGen = {
+    lastPlatformX: levelStartWorldX,
+    lastPlatformY: 400,
+    nextEventDistance: levelStartWorldX + 400,
+    nextPowerupDistance: levelStartWorldX + 250,
+    generatedUpTo: levelStartWorldX
+  };
+  
+  // 生成关卡起始平台
+  platforms.push({ x: levelStartWorldX + 50, y: 450, w: 300, h: 20 });
+  terrainGen.lastPlatformX = levelStartWorldX + 350;
+  terrainGen.lastPlatformY = 450;
+  terrainGen.generatedUpTo = levelStartWorldX + 350;
+  
+  // 相机跳转到关卡起点
+  game.camera.x = levelStartWorldX - 100;
+  
+  game.paused = false;
+  game.running = true;
+  
+  const lvl = LEVELS[game.currentLevel];
+  addNotification(`🔄 从第${game.currentLevel + 1}关「${lvl.name}」重新开始！`, 'warning', 180);
+}
+
+function endGameFromFall() {
+  document.getElementById('fallScreen').style.display = 'none';
+  gameOver();
+}
+
+// ==================== 主循环 ====================
+
+let gameLoopRunning = false;
+
+function gameLoop() {
+  requestAnimationFrame(gameLoop);
+  
+  if (!game.running) {
+    // 仍然绘制最后一帧
+    drawFrame();
+    return;
+  }
+  
+  game.time++;
+  
+  // 更新
+  updateDuck();
+  updateCamera();
+  generateWorld();
+  updateEnemies();
+  updateProjectiles();
+  updateObstacles();
+  updatePowerups();
+  updateActiveEvent();
+  updateWeatherParticles();
+  updateParticles();
+  
+  // 绘制
+  drawFrame();
+}
+
+function drawFrame() {
+  ctx.clearRect(0, 0, W, H);
+  
+  // 背景
+  drawBackground();
+  
+  // 天气效果（在平台后面）
+  drawWeather();
+  
+  // 平台
+  for (const p of platforms) {
+    const sx = p.x - game.camera.x;
+    if (sx > -200 && sx < W + 200) {
+      drawPlatform(p);
+    }
+  }
+  
+  // 障碍区域可视化
+  for (const o of obstacles) {
+    const sx = o.x - game.camera.x;
+    if (sx > -500 && sx < W + 200) {
+      drawObstacleZone(o);
+    }
+  }
+  
+  // 道具
+  for (const p of powerups) {
+    const sx = p.x - game.camera.x;
+    if (sx > -50 && sx < W + 50) {
+      drawPowerup(p);
+    }
+  }
+  
+  // 敌人
+  for (const e of enemies) {
+    const sx = e.x - game.camera.x;
+    if (sx > -100 && sx < W + 200) {
+      if (e.type === 'hunter') drawHunter(e);
+      if (e.type === 'wolf') drawWolf(e);
+    }
+  }
+  
+  // 子弹
+  for (const p of projectiles) {
+    const sx = p.x - game.camera.x;
+    if (sx > -50 && sx < W + 50) {
+      drawBullet(p);
+    }
+  }
+  
+  // 鸭子
+  const duckSX = duck.x - game.camera.x;
+  const duckSY = duck.y - game.camera.y;
+  const duckState = duck.walking ? 'walk' : (duck.onGround ? 'idle' : 'jump');
+  
+  // 无敌闪烁
+  if (duck.invincible > 0 && Math.floor(duck.invincible / 3) % 2 === 0) {
+    ctx.globalAlpha = 0.5;
+  }
+  drawDuck(duckSX, duckSY, duck.facing, duck.animFrame, duckState);
+  ctx.globalAlpha = 1;
+  
+  // 粒子
+  drawParticles();
+  
+  // UI
+  drawUI();
+  drawNotifications();
+}
+
+function drawObstacleZone(o) {
+  const sx = o.x - game.camera.x;
+  
+  switch(o.type) {
+    case 'food_crisis':
+      ctx.fillStyle = 'rgba(139, 69, 19, 0.15)';
+      ctx.fillRect(sx, o.y, o.w, o.h);
+      // 枯萎植物
+      ctx.fillStyle = '#8B6914';
+      for (let fx = sx + 20; fx < sx + o.w - 20; fx += 40) {
+        ctx.beginPath();
+        ctx.moveTo(fx, o.y + o.h);
+        ctx.lineTo(fx + 5, o.y + o.h - 25);
+        ctx.lineTo(fx + 10, o.y + o.h);
+        ctx.fill();
+      }
+      break;
+    case 'storm_zone':
+      ctx.fillStyle = 'rgba(0, 50, 100, 0.1)';
+      ctx.fillRect(sx, o.y, o.w, o.h);
+      break;
+    case 'snow_zone':
+      ctx.fillStyle = 'rgba(200, 220, 255, 0.1)';
+      ctx.fillRect(sx, o.y, o.w, o.h);
+      break;
+    case 'heat_zone':
+      ctx.fillStyle = 'rgba(255, 100, 0, 0.08)';
+      ctx.fillRect(sx, o.y, o.w, o.h);
+      break;
+  }
+}
+
+// ==================== 工具函数 ====================
+
+function lerpColor(c1, c2, t) {
+  const r1 = parseInt(c1.slice(1,3), 16);
+  const g1 = parseInt(c1.slice(3,5), 16);
+  const b1 = parseInt(c1.slice(5,7), 16);
+  const r2 = parseInt(c2.slice(1,3), 16);
+  const g2 = parseInt(c2.slice(3,5), 16);
+  const b2 = parseInt(c2.slice(5,7), 16);
+  const r = Math.round(r1 + (r2 - r1) * t);
+  const g = Math.round(g1 + (g2 - g1) * t);
+  const b = Math.round(b1 + (b2 - b1) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
+function shadeColor(color, percent) {
+  let r = parseInt(color.slice(1,3), 16);
+  let g = parseInt(color.slice(3,5), 16);
+  let b = parseInt(color.slice(5,7), 16);
+  r = Math.max(0, Math.min(255, r + Math.round(r * percent / 100)));
+  g = Math.max(0, Math.min(255, g + Math.round(g * percent / 100)));
+  b = Math.max(0, Math.min(255, b + Math.round(b * percent / 100)));
+  return `rgb(${r},${g},${b})`;
+}
+
+// 初始绘制
+ctx.fillStyle = '#1a1a2e';
+ctx.fillRect(0, 0, W, H);
+</script>
+
+</body>
+</html>
