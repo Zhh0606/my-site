@@ -1928,12 +1928,19 @@ function restartCurrentLevel() {
   duck.hasHelmet = false;
   duck.hasWaterproof = false;
   duck.speedBoost = 0;
+  duck.facing = 1;
+  duck.animFrame = 0;
+  duck.animTimer = 0;
+  duck.walking = false;
+  duck.blinkTimer = 0;
   
   // 重置距离到关卡起点
   game.distance = levelDistStart;
   game.maxDistance = levelDistStart;
   game.score = levelDistStart;
   game.levelStartX = levelStartWorldX;
+  game.levelTransitioning = false; // 重置关卡切换锁
+  game.reachedGoal = false; // 重置终点标记
   
   // 清除所有世界对象，重新生成
   platforms = [];
@@ -1943,6 +1950,7 @@ function restartCurrentLevel() {
   projectiles = [];
   particles = [];
   weatherParticles = [];
+  notifications = [];
   activeEvent = null;
   
   // 重置地形生成器
@@ -1963,6 +1971,7 @@ function restartCurrentLevel() {
   // 相机跳转到关卡起点
   game.camera.x = levelStartWorldX - 100;
   
+  // 确保所有覆盖面板都隐藏
   game.paused = false;
   game.running = true;
   
